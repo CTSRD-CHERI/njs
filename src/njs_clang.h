@@ -258,11 +258,11 @@ njs_unsafe_cast_double_to_int64(double num)
 
 
 #define njs_align_ptr(p, a)                                                   \
-    (u_char *) (((uintptr_t) (p) + ((uintptr_t) (a) - 1))                     \
-                 & ~((uintptr_t) (a) - 1))
+    (u_char *) (((uintptr_t) (p) + ((size_t) (a) - 1))                     \
+                 & ~((size_t) (a) - 1))
 
 #define njs_trunc_ptr(p, a)                                                   \
-    (u_char *) ((uintptr_t) (p) & ~((uintptr_t) (a) - 1))
+    (u_char *) ((uintptr_t) (p) & ~((size_t) (a) - 1))
 
 
 #endif /* _NJS_CLANG_H_INCLUDED_ */

@@ -90,6 +90,7 @@ typedef struct njs_object_value_s     njs_promise_t;
 typedef struct njs_property_next_s    njs_property_next_t;
 
 
+// XXXR3: size will be different in CHERI: 0x20 bytes
 union njs_value_s {
     /*
      * The njs_value_t size is 16 bytes and must be aligned to 16 bytes
@@ -148,7 +149,7 @@ union njs_value_s {
         uint8_t                       length:4;
 
         u_char                        start[NJS_STRING_SHORT];
-    } short_string;
+    } short_string; // XXXR3: short string can be longer in CHERI?
 
     struct {
         njs_value_type_t              type:8;  /* 6 bits */

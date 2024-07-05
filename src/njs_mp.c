@@ -83,6 +83,7 @@ typedef struct {
     njs_queue_t                 pages;
 
     /* Size of page chunks. */
+    /* XXXR3: I'm not sure. To test. */
 #if (NJS_64BIT)
     uint32_t                    size;
 #else

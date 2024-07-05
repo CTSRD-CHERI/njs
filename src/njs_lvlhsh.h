@@ -14,25 +14,32 @@ typedef njs_int_t (*njs_lvlhsh_test_t)(njs_lvlhsh_query_t *lhq, void *data);
 typedef void *(*njs_lvlhsh_alloc_t)(void *ctx, size_t size);
 typedef void (*njs_lvlhsh_free_t)(void *ctx, void *p, size_t size);
 
+// XXXR3: change the granularity to sizeof(uintptr_t) unconditionally,
+// although key hash is uint32_t
+#define NJS_LVLHSH_ENTRY_SIZE           2   // two uintptr_t
 
-#if (NJS_64BIT)
+#if (NJS_PTR_SIZE == 16)
+
+#define NJS_LVLHSH_DEFAULT_BUCKET_SIZE  256
+
+/* 4 is shift of 128-bit pointer. */
+#define NJS_LVLHSH_MEMALIGN_SHIFT       (NJS_MAX_MEMALIGN_SHIFT - 4)
+
+#elif (NJS_PTR_SIZE == 8)
 
 #define NJS_LVLHSH_DEFAULT_BUCKET_SIZE  128
-#define NJS_LVLHSH_ENTRY_SIZE           3
 
 /* 3 is shift of 64-bit pointer. */
 #define NJS_LVLHSH_MEMALIGN_SHIFT       (NJS_MAX_MEMALIGN_SHIFT - 3)
 
-#else
+#else /* NJS_PTR_SIZE != 16 && NJS_PTR_SIZE != 8 */
 
 #define NJS_LVLHSH_DEFAULT_BUCKET_SIZE  64
-#define NJS_LVLHSH_ENTRY_SIZE           2
 
 /* 2 is shift of 32-bit pointer. */
 #define NJS_LVLHSH_MEMALIGN_SHIFT       (NJS_MAX_MEMALIGN_SHIFT - 2)
 
-#endif
-
+#endif /* NJS_PTR_SIZE */
 
 #if (NJS_LVLHSH_MEMALIGN_SHIFT < 10)
 #define NJS_LVLHSH_MAX_MEMALIGN_SHIFT   NJS_LVLHSH_MEMALIGN_SHIFT
@@ -43,7 +50,7 @@ typedef void (*njs_lvlhsh_free_t)(void *ctx, void *p, size_t size);
 
 #define NJS_LVLHSH_BUCKET_END(bucket_size)                                    \
     (((bucket_size) - sizeof(void *))                                         \
-        / (NJS_LVLHSH_ENTRY_SIZE * sizeof(uint32_t))                          \
+        / (NJS_LVLHSH_ENTRY_SIZE * sizeof(uintptr_t))                         \
      * NJS_LVLHSH_ENTRY_SIZE)
 
 
@@ -157,7 +164,7 @@ typedef struct {
      * bits, because entry positions are not aligned.  A current level is
      * stored as key bit path from the root.
      */
-    uint32_t                  *bucket;
+    njs_ptr_t                 *bucket;
     uint32_t                  current;
     uint32_t                  entry;
     uint32_t                  entries;
