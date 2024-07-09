@@ -40,15 +40,20 @@ typedef struct njs_external_s         njs_external_t;
 /*
  * njs_opaque_value_t is the external storage type for native njs_value_t type.
  * sizeof(njs_opaque_value_t) == sizeof(njs_value_t).
+ * XXXR3: sizeof(njs_value_t) is 32 bytes for CHERI.
  */
 
 typedef struct {
+#if (NJS_PTR_SIZE == 16)
+    uint64_t                        filler[4];
+#else
     uint64_t                        filler[2];
+#endif
 } njs_opaque_value_t;
 
-/* sizeof(njs_value_t) is 16 bytes. */
+/* sizeof(njs_value_t) is 16 bytes, and 32 bytes for CHERI */
 #define njs_argument(args, n)                                                 \
-    (njs_value_t *) ((u_char *) args + (n) * 16)
+    (njs_value_t *) ((u_char *) args + (n) * sizeof(njs_opaque_value_t))
 
 
 extern const njs_value_t            njs_value_undefined;

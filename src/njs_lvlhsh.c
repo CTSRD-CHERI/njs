@@ -27,8 +27,8 @@
  * 2) [0, 10]: [10, 4, 4, 4, 4, 4, 0] on a 64-bit platform or
  *             [10, 5, 5, 5, 5, 0, 0] on a 32-bit platform,
  *    so default size of levels is 128 bytes on all levels except
- *    the first level.  The first level is 8K or 4K on 64-bit or 32-bit
- *    platforms respectively.
+ *    the first level. The first level is 8K or 4K on 64-bit or 32-bit
+ *    platforms respectively. For CHERI, it is 16K.
  *
  * All buckets in a hash are the same size which is a power of 2.
  * A bucket contains several entries stored and tested sequentially.
@@ -36,8 +36,8 @@
  * allowed size is 32 bytes.  A default 128-byte bucket contains 10 64-bit
  * entries or 15 32-bit entries.  Each entry consists of pointer to value
  * data and 32-bit key.  If an entry value pointer is NULL, the entry is free.
- * On a 64-bit platform entry value pointers are no aligned, therefore they
- * are accessed as two 32-bit integers.  The rest trailing space in a bucket
+ * On CHERI, entry value pointers must be aligned and not splitted as 32-bit
+ * integers. The rest trailing space in a bucket
  * is used as pointer to next bucket and this pointer is always aligned.
  * Although the level hash allows to store a lot of values in a bucket chain,
  * this is non optimal way.  The large data set should be stored using
@@ -77,7 +77,7 @@
 
 
 #define njs_lvlhsh_bucket(proto, bkt)                                         \
-    (uint32_t *) ((uintptr_t) bkt & ~(uintptr_t) proto->bucket_mask)
+    (njs_ptr_t *) ((uintptr_t) bkt & ~(uintptr_t) proto->bucket_mask)
 
 
 #define njs_lvlhsh_bucket_entries(proto, bkt)                                 \
@@ -95,32 +95,9 @@
 #define njs_lvlhsh_next_bucket(proto, bkt)                                    \
     ((void **) &bkt[proto->bucket_end])
 
-#if (NJS_64BIT)
 
 #define njs_lvlhsh_valid_entry(e)                                             \
-    (((e)[0] | (e)[1]) != 0)
-
-
-#define njs_lvlhsh_entry_value(e)                                             \
-    (void *) (((uintptr_t) (e)[1] << 32) + (e)[0])
-
-
-#define njs_lvlhsh_set_entry_value(e, n)                                      \
-    (e)[0] = (uint32_t)  (uintptr_t) n;                                       \
-    (e)[1] = (uint32_t) ((uintptr_t) n >> 32)
-
-
-#define njs_lvlhsh_entry_key(e)                                               \
-    (e)[2]
-
-
-#define njs_lvlhsh_set_entry_key(e, n)                                        \
-    (e)[2] = n
-
-#else
-
-#define njs_lvlhsh_valid_entry(e)                                             \
-    ((e)[0] != 0)
+    ((e) != 0)
 
 
 #define njs_lvlhsh_entry_value(e)                                             \
@@ -128,17 +105,15 @@
 
 
 #define njs_lvlhsh_set_entry_value(e, n)                                      \
-    (e)[0] = (uint32_t) n
+    (e)[0] = (uintptr_t) (n)
 
 
 #define njs_lvlhsh_entry_key(e)                                               \
-    (e)[1]
+    (uint32_t) (e)[1]
 
 
 #define njs_lvlhsh_set_entry_key(e, n)                                        \
-    (e)[1] = n
-
-#endif
+    (e)[1] = (uint32_t) (n)
 
 
 #define NJS_LVLHSH_BUCKET_DONE  ((void *) -1)
@@ -153,7 +128,7 @@ static njs_int_t njs_lvlhsh_level_insert(njs_lvlhsh_query_t *lhq,
 static njs_int_t njs_lvlhsh_bucket_insert(njs_lvlhsh_query_t *lhq,
     void **slot, uint32_t key, njs_int_t nlvl);
 static njs_int_t njs_lvlhsh_convert_bucket_to_level(njs_lvlhsh_query_t *lhq,
-    void **slot, njs_uint_t nlvl, uint32_t *bucket);
+    void **slot, njs_uint_t nlvl, njs_ptr_t *bucket);
 static njs_int_t njs_lvlhsh_level_convertion_insert(njs_lvlhsh_query_t *lhq,
     void **parent, uint32_t key, njs_uint_t nlvl);
 static njs_int_t njs_lvlhsh_bucket_convertion_insert(njs_lvlhsh_query_t *lhq,
@@ -215,11 +190,11 @@ njs_lvlhsh_level_find(njs_lvlhsh_query_t *lhq, void **lvl, uint32_t key,
 }
 
 
-static njs_int_t
+static njs_ptr_t
 njs_lvlhsh_bucket_find(njs_lvlhsh_query_t *lhq, void **bkt)
 {
     void        *value;
-    uint32_t    *bucket, *e;
+    njs_ptr_t   *bucket, *e;
     njs_uint_t  n;
 
     do {
@@ -338,7 +313,7 @@ njs_lvlhsh_bucket_insert(njs_lvlhsh_query_t *lhq, void **slot, uint32_t key,
     njs_int_t nlvl)
 {
     void                      **bkt, **vacant_bucket, *value;
-    uint32_t                  *bucket, *e, *vacant_entry;
+    njs_ptr_t                 *bucket, *e, *vacant_entry;
     njs_int_t                 ret;
     uintptr_t                 n;
     const void                *new_value;
@@ -441,10 +416,11 @@ njs_lvlhsh_bucket_insert(njs_lvlhsh_query_t *lhq, void **slot, uint32_t key,
 
 static njs_int_t
 njs_lvlhsh_convert_bucket_to_level(njs_lvlhsh_query_t *lhq, void **slot,
-    njs_uint_t nlvl, uint32_t *bucket)
+    njs_uint_t nlvl, njs_ptr_t *bucket)
 {
     void                      *lvl, **level;
-    uint32_t                  *e, *end, key;
+    njs_ptr_t                 *e, *end;
+    uint32_t                  key;
     njs_int_t                 ret;
     njs_uint_t                i, shift, size;
     njs_lvlhsh_query_t        q;
@@ -542,7 +518,7 @@ njs_lvlhsh_bucket_convertion_insert(njs_lvlhsh_query_t *lhq, void **slot,
     uint32_t key, njs_int_t nlvl)
 {
     void                      **bkt;
-    uint32_t                  *bucket, *e;
+    njs_ptr_t                 *bucket, *e;
     njs_int_t                 ret;
     uintptr_t                 n;
     const njs_lvlhsh_proto_t  *proto;
@@ -681,7 +657,7 @@ njs_lvlhsh_bucket_delete(njs_lvlhsh_query_t *lhq, void **bkt)
 {
     void                      *value;
     size_t                    size;
-    uint32_t                  *bucket, *e;
+    njs_ptr_t                 *bucket, *e;
     uintptr_t                 n;
     const njs_lvlhsh_proto_t  *proto;
 
@@ -826,7 +802,7 @@ static void *
 njs_lvlhsh_bucket_each(njs_lvlhsh_each_t *lhe)
 {
     void      *value, **next;
-    uint32_t  *bucket;
+    njs_ptr_t *bucket;
 
     /* At least one valid entry must present here. */
     do {

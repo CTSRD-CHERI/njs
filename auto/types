@@ -70,6 +70,7 @@ njs_feature_test="#include <stdint.h>
 
 
 case "$njs_feature_value" in
+    16) NJS_64BIT=1 ;;
     8) NJS_64BIT=1 ;;
     *) NJS_64BIT=0 ;;
 esac

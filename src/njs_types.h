@@ -25,8 +25,14 @@
 #include <sys/types.h>
 #include <stdint.h>
 
+#if __has_feature(capabilities)
+#include <cheri/cheric.h>
+#endif
 
-#if (__LP64__)
+#if defined(__CHERI_PURE_CAPABILITY__)
+#define NJS_64BIT       1
+#define NJS_PTR_SIZE    16
+#elif (__LP64__)
 #define NJS_64BIT       1
 #define NJS_PTR_SIZE    8
 #else
@@ -34,6 +40,7 @@
 #define NJS_PTR_SIZE    4
 #endif
 
+typedef uintptr_t       njs_ptr_t;
 
 /*
  * njs_int_t corresponds to the most efficient integer type, an architecture
@@ -51,9 +58,9 @@ typedef int             njs_int_t;
 typedef u_int           njs_uint_t;
 
 #else
-#define NJS_INT_T_SIZE  NJS_PTR_SIZE
-typedef intptr_t        njs_int_t;
-typedef uintptr_t       njs_uint_t;
+#define NJS_INT_T_SIZE  8
+typedef ssize_t        njs_int_t;
+typedef size_t         njs_uint_t;
 #endif
 
 
@@ -72,7 +79,6 @@ typedef unsigned __int128 njs_uint128_t;
 #define NJS_INT_T_HEXLEN     NJS_INT32_T_HEXLEN
 #define NJS_INT_T_MAX        NJS_INT32_T_MAX
 #endif
-
 
 typedef njs_uint_t      njs_bool_t;
 typedef int             njs_err_t;
