@@ -99,3 +99,16 @@ njs_set_object_value (value=0xfffffff7fb10 [rwRW,0xfffffff7fb10-0xfffffff7fb20],
 [#7] 0x14f618 → njs_main(opts=<optimized out>)
 [#8] 0x14f618 → main(argc=<optimized out>, argv=<optimized out>)
 ```
+
+- Linking problems. The same error fires when compiling for Ubuntu 22.04. I'd say the njs fuzzer build is broken in upstream.
+
+```
+c++ -O2 -pipe -o build/njs_process_script_fuzzer  -I/usr/local/include    build/njs_process_script_fuzzer.o  build/libnjs.a  -lm   -L/usr/local/lib -Wl,-R/usr/local/lib -lpcre2-8 -lcrypto -L/usr/local/lib -lxml2 -lz
+ld: error: undefined symbol: main
+>>> referenced by crt1_c.c:132 (/local/scratch/jenkins/workspace/CheriBSD-pipeline_releng_24.05@2/cheribsd/lib/csu/aarch64c/crt1_c.c:132)
+>>>               /usr/lib/Scrt1.o:()
+>>> referenced by crt1_c.c:132 (/local/scratch/jenkins/workspace/CheriBSD-pipeline_releng_24.05@2/cheribsd/lib/csu/aarch64c/crt1_c.c:132)
+>>>               /usr/lib/Scrt1.o:()
+clang-14: error: linker command failed with exit code 1 (use -v to see invocation)
+*** Error code 1
+```
