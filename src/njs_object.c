@@ -2226,6 +2226,7 @@ static njs_int_t
 njs_object_prototype_value_of(njs_vm_t *vm, njs_value_t *args, njs_uint_t nargs,
     njs_index_t unused, njs_value_t *retval)
 {
+#ifndef NJS_VULN
     njs_value_t  *value;
 
     value = njs_argument(args, 0);
@@ -2237,6 +2238,14 @@ njs_object_prototype_value_of(njs_vm_t *vm, njs_value_t *args, njs_uint_t nargs,
     }
 
     njs_value_assign(retval, value);
+#else
+    njs_value_assign(retval, njs_argument(args, 0));
+    if (!njs_is_object(retval)) {
+        if (njs_value_to_object(vm, retval) != NJS_OK) {
+            return NJS_ERROR;
+        }
+    }
+#endif
 
     return NJS_OK;
 }

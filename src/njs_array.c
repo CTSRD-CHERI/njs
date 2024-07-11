@@ -1585,7 +1585,11 @@ njs_array_prototype_to_reversed(njs_vm_t *vm, njs_value_t *args,
     int64_t      length, i;
     njs_int_t    ret;
     njs_array_t  *array;
+#ifndef NJS_VULN
     njs_value_t  *this, a, value;
+#else
+    njs_value_t  *this, value;
+#endif
 
     this = njs_argument(args, 0);
 
@@ -1604,21 +1608,30 @@ njs_array_prototype_to_reversed(njs_vm_t *vm, njs_value_t *args,
         return NJS_ERROR;
     }
 
+#ifndef NJS_VULN
     njs_set_array(&a, array);
+#else
+    njs_set_array(retval, array);
+#endif
 
     for (i = 0; i < length; i++) {
         ret = njs_value_property_i64(vm, this, length - i - 1, &value);
         if (njs_slow_path(ret == NJS_ERROR)) {
             return NJS_ERROR;
         }
-
+#ifndef NJS_VULN
         ret = njs_value_create_data_prop_i64(vm, &a, i, &value, 0);
+#else
+        ret = njs_value_create_data_prop_i64(vm, retval, i, &value, 0);
+#endif
         if (njs_slow_path(ret != NJS_OK)) {
             return ret;
         }
     }
 
+#ifndef NJS_VULN
     njs_set_array(retval, array);
+#endif
 
     return NJS_OK;
 }
@@ -3043,7 +3056,11 @@ njs_array_prototype_to_sorted(njs_vm_t *vm, njs_value_t *args, njs_uint_t nargs,
     int64_t                i, nslots, nunds, length;
     njs_int_t              ret;
     njs_array_t            *array;
+#ifndef NJS_VULN
     njs_value_t            *this, *comparefn, a;
+#else
+    njs_value_t            *this, *comparefn;
+#endif
     njs_function_t         *compare;
     njs_array_sort_slot_t  *slots;
 
@@ -3095,25 +3112,40 @@ njs_array_prototype_to_sorted(njs_vm_t *vm, njs_value_t *args, njs_uint_t nargs,
 
     njs_assert(length == (nslots + nunds));
 
+#ifndef NJS_VULN
     njs_set_array(&a, array);
+#else
+    njs_set_array(retval, array);
+#endif
 
     for (i = 0; i < nslots; i++) {
+#ifndef NJS_VULN
         ret = njs_value_create_data_prop_i64(vm, &a, i, &slots[i].value, 0);
+#else
+        ret = njs_value_create_data_prop_i64(vm, retval, i, &slots[i].value, 0);
+#endif
         if (njs_slow_path(ret != NJS_OK)) {
             goto exception;
         }
     }
 
     for (; i < length; i++) {
+#ifndef NJS_VULN
         ret = njs_value_create_data_prop_i64(vm, &a, i,
                                         njs_value_arg(&njs_value_undefined), 0);
+#else
+        ret = njs_value_create_data_prop_i64(vm, &a, i,
+                                        njs_value_arg(&njs_value_undefined), 0);
+#endif
         if (njs_slow_path(ret != NJS_OK)) {
             goto exception;
         }
     }
 
     ret = NJS_OK;
+#ifndef NJS_VULN
     njs_set_array(retval, array);
+#endif
 
 exception:
 
