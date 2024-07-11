@@ -64,6 +64,12 @@ type = union njs_value_s {
 }
 ```
 
+- Added `NJS_VULN` macro to build an intentionally vulnerable version.
+```sh
+./configure --vuln
+make
+```
+
 ## Errors in the porting process
 
 - CHERI Provenance due to pointer arithmetic

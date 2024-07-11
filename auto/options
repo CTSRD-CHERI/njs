@@ -25,6 +25,8 @@ NJS_TRY_PCRE2=YES
 
 NJS_TRY_GOTO=YES
 
+NJS_VULN=NO
+
 NJS_CONFIGURE_OPTIONS=
 
 for njs_option
@@ -59,6 +61,8 @@ do
 
         --no-goto)                       NJS_TRY_GOTO=NO                     ;;
         --with-quickjs)                  NJS_TRY_QUICKJS=YES; NJS_QUICKJS=YES ;;
+
+        --vuln)                          NJS_VULN=YES                        ;;
 
         --help)
             . auto/help

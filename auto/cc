@@ -185,5 +185,9 @@ if [ "$NJS_DEBUG_GENERATOR" = "YES" ]; then
         njs_define=NJS_DEBUG_GENERATOR . auto/define
 fi
 
+if [ "$NJS_VULN" = "YES" ]; then
+        njs_define=NJS_VULN . auto/define
+fi
+
 # Stop on error exit status again.
 set -e

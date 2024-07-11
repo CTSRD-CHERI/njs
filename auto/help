@@ -49,4 +49,5 @@ default: "$NJS_LD_OPT"
                             enabled zlib dependant code is not built as a
                             part of libnjs.a.
   --with-quickjs            requires QuickJS engine.
+  --vuln                    inserts some vulnerabilities, for research.
 END
