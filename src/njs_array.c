@@ -3134,7 +3134,7 @@ njs_array_prototype_to_sorted(njs_vm_t *vm, njs_value_t *args, njs_uint_t nargs,
         ret = njs_value_create_data_prop_i64(vm, &a, i,
                                         njs_value_arg(&njs_value_undefined), 0);
 #else
-        ret = njs_value_create_data_prop_i64(vm, &a, i,
+        ret = njs_value_create_data_prop_i64(vm, retval, i,
                                         njs_value_arg(&njs_value_undefined), 0);
 #endif
         if (njs_slow_path(ret != NJS_OK)) {

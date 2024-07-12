@@ -25,8 +25,10 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#if __has_feature(capabilities)
-#include <cheri/cheric.h>
+#if defined(__has_feature)
+    #if __has_feature(capabilities)
+    #include <cheri/cheric.h>
+    #endif
 #endif
 
 #if defined(__CHERI_PURE_CAPABILITY__)
